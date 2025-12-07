@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Jertz",
+    "slug": "jertz",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/logoOnly.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/logoOnly.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#7B2D8E"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jerttech.jertz"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logoOnly.png",
+        "backgroundColor": "#7B2D8E"
+      },
+      "package": "com.jerttech.jertz"
+    },
+    "web": {
+      "favicon": "./assets/images/logoOnly.png"
+    },
+    "plugins": [
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow Jertz to access your microphone for voice reactions."
+        }
+      ]
+    ]
+  }
+}
