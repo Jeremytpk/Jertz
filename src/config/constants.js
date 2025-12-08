@@ -18,6 +18,7 @@ export const MAX_FILE_SIZE_MB = 50;
 export const CHALLENGE_IMAGE_SIZE = 300; // 300x300px
 
 export const VOICE_REACTIONS = [
+  { id: 'thumbsup', label: 'Nice!', emoji: '👍', sound: 'thumbsup.mp3' },
   { id: 'fire', label: 'Fire!', emoji: '🔥', sound: 'fire.mp3' },
   { id: 'next', label: 'Next!', emoji: '⏭️', sound: 'next.mp3' },
   { id: 'boo', label: 'Boooo!', emoji: '👎', sound: 'boo.mp3' },

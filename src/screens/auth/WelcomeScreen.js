@@ -74,7 +74,7 @@ const WelcomeScreen = ({ navigation }) => {
       </Animated.View>
 
       {/* Footer */}
-      <Text style={styles.footer}>Gen Z's Audio Hangout</Text>
+      <Text style={styles.footer}>The Audio Hangout</Text>
     </LinearGradient>
   );
 };

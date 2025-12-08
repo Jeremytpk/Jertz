@@ -34,6 +34,7 @@ export const COLORS = {
 
 export const GRADIENTS = {
   primary: ['#E21F26', '#7B2D8E'],       // Red to Purple
+  secondary: ['#7B2D8E', '#D91F68'],     // Purple to Pink
   primaryReverse: ['#7B2D8E', '#E21F26'], // Purple to Red
   dark: ['#0A0A0A', '#1A1A1A'],
   accent: ['#D91F68', '#7B2D8E'],

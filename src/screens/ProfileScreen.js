@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,14 +7,108 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import { COLORS, GRADIENTS, SPACING, FONTS, BORDER_RADIUS, SHADOWS } from '../config/theme';
 import { useAuth } from '../contexts/AuthContext';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, isGuest, signOut } = useAuth();
+  const [uploadCount, setUploadCount] = useState(0);
+  const [roomCount, setRoomCount] = useState(0);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [liveRoomCount, setLiveRoomCount] = useState(0);
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isGuest && user) {
+      // Reset counts before fetching
+      setUploadCount(0);
+      setRoomCount(0);
+      setFollowerCount(0);
+      setLiveRoomCount(0);
+      fetchUserStats();
+    } else {
+      setLoading(false);
+    }
+  }, [user, isGuest]);
+
+  // Refresh when screen comes into focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (!isGuest && user) {
+        // Reset counts before fetching
+        setUploadCount(0);
+        setRoomCount(0);
+        setFollowerCount(0);
+        setLiveRoomCount(0);
+        fetchUserStats();
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, user, isGuest]);
+
+  const fetchUserStats = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch user profile data
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        setUserProfile(userDoc.data());
+      }
+
+      // Fetch upload count
+      const songsQuery = query(
+        collection(db, 'songs'),
+        where('uploadedBy', '==', user.uid)
+      );
+      const songsSnapshot = await getDocs(songsQuery);
+      console.log('Songs found:', songsSnapshot.size);
+      console.log('User UID:', user.uid);
+      console.log('Songs data:', songsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setUploadCount(songsSnapshot.size);
+
+      // Fetch room count
+      const roomsQuery = query(
+        collection(db, 'rooms'),
+        where('createdBy', '==', user.uid)
+      );
+      const roomsSnapshot = await getDocs(roomsQuery);
+      console.log('Rooms found:', roomsSnapshot.size);
+      setRoomCount(roomsSnapshot.size);
+
+      // Fetch follower count (if followers collection exists)
+      const followersQuery = query(
+        collection(db, 'followers'),
+        where('followingId', '==', user.uid)
+      );
+      const followersSnapshot = await getDocs(followersQuery);
+      console.log('Followers found:', followersSnapshot.size);
+      setFollowerCount(followersSnapshot.size);
+
+      // Fetch live room count
+      const liveRoomsQuery = query(
+        collection(db, 'rooms'),
+        where('hostId', '==', user.uid),
+        where('isLive', '==', true)
+      );
+      const liveRoomsSnapshot = await getDocs(liveRoomsQuery);
+      console.log('Live Rooms found:', liveRoomsSnapshot.size);
+      setLiveRoomCount(liveRoomsSnapshot.size);
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      setLoading(false);
+    }
+  };
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -63,8 +157,11 @@ const ProfileScreen = ({ navigation }) => {
     <View style={styles.container}>
       {/* Header */}
       <LinearGradient colors={GRADIENTS.primary} style={styles.header}>
-        <TouchableOpacity style={styles.settingsButton}>
-          <Ionicons name="settings-outline" size={24} color={COLORS.text} />
+        <TouchableOpacity 
+          style={styles.settingsButton}
+          onPress={() => navigation.navigate('EditProfile')}
+        >
+          <Ionicons name="create-outline" size={24} color={COLORS.text} />
         </TouchableOpacity>
       </LinearGradient>
 
@@ -72,30 +169,44 @@ const ProfileScreen = ({ navigation }) => {
         {/* Profile Info */}
         <View style={styles.profileSection}>
           <Image
-            source={{ uri: user?.photoURL || 'https://via.placeholder.com/120' }}
+            source={
+              userProfile?.photoURL
+                ? { uri: userProfile.photoURL }
+                : user?.photoURL
+                ? { uri: user.photoURL }
+                : require('../../assets/images/profile.png')
+            }
             style={styles.avatar}
           />
-          <Text style={styles.displayName}>{user?.displayName || 'User'}</Text>
+          <Text style={styles.displayName}>
+            {userProfile?.displayName || user?.displayName || 'User'}
+          </Text>
           <Text style={styles.email}>{user?.email}</Text>
+          {userProfile?.bio && (
+            <Text style={styles.bio}>{userProfile.bio}</Text>
+          )}
 
           <View style={styles.stats}>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statNumber}>{uploadCount}</Text>
               <Text style={styles.statLabel}>Uploads</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statNumber}>{liveRoomCount}</Text>
               <Text style={styles.statLabel}>Rooms</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>0</Text>
+              <Text style={styles.statNumber}>{followerCount}</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </View>
           </View>
 
-          <TouchableOpacity style={styles.editProfileButton}>
+          <TouchableOpacity 
+            style={styles.editProfileButton}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
             <Text style={styles.editProfileText}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
@@ -105,7 +216,7 @@ const ProfileScreen = ({ navigation }) => {
           <MenuOption
             icon="musical-notes-outline"
             title="My Uploads"
-            onPress={() => {}}
+            onPress={() => navigation.navigate('MyUploads')}
           />
           <MenuOption
             icon="time-outline"
@@ -120,7 +231,7 @@ const ProfileScreen = ({ navigation }) => {
           <MenuOption
             icon="people-outline"
             title="Following"
-            onPress={() => {}}
+            onPress={() => navigation.navigate('Following')}
           />
           <MenuOption
             icon="notifications-outline"
@@ -169,6 +280,7 @@ const MenuOption = ({ icon, title, onPress }) => (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingBottom: 40,
     backgroundColor: COLORS.background,
   },
   guestHeader: {
@@ -245,6 +357,14 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.md,
     color: COLORS.textSecondary,
     marginBottom: SPACING.lg,
+  },
+  bio: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.text,
+    textAlign: 'center',
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.md,
+    lineHeight: 22,
   },
   stats: {
     flexDirection: 'row',

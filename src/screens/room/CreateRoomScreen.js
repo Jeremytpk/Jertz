@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,18 +10,31 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 import { COLORS, GRADIENTS, SPACING, FONTS, BORDER_RADIUS } from '../../config/theme';
 import { ROOM_MODES, MAX_ROOM_CAPACITY } from '../../config/constants';
 import { useAuth } from '../../contexts/AuthContext';
+import { useMusicPlayer } from '../../contexts/MusicPlayerContext';
 
-const CreateRoomScreen = ({ navigation }) => {
-  const { isGuest } = useAuth();
+const CreateRoomScreen = ({ navigation, route }) => {
+  const { user, isGuest } = useAuth();
+  const { playSong } = useMusicPlayer();
+  const { preSelectedSong, isChallenge } = route.params || {};
   const [roomName, setRoomName] = useState('');
-  const [roomMode, setRoomMode] = useState(ROOM_MODES.STANDARD);
+  const [roomMode, setRoomMode] = useState(isChallenge ? ROOM_MODES.CHALLENGE : ROOM_MODES.STANDARD);
   const [capacity, setCapacity] = useState(25);
   const [isPrivate, setIsPrivate] = useState(false);
+  const [creating, setCreating] = useState(false);
 
-  const handleCreateRoom = () => {
+  useEffect(() => {
+    // Set initial room mode based on route params
+    if (isChallenge !== undefined) {
+      setRoomMode(isChallenge ? ROOM_MODES.CHALLENGE : ROOM_MODES.STANDARD);
+    }
+  }, [isChallenge]);
+
+  const handleCreateRoom = async () => {
     // Check if user is in guest mode
     if (isGuest) {
       Alert.alert(
@@ -40,19 +53,52 @@ const CreateRoomScreen = ({ navigation }) => {
       return;
     }
 
-    // TODO: Create room in Firebase
-    Alert.alert('Success', 'Room created!', [
-      {
-        text: 'OK',
-        onPress: () => {
-          if (roomMode === ROOM_MODES.STANDARD) {
-            navigation.navigate('ListeningRoom', { roomId: 'demo' });
-          } else {
-            navigation.navigate('ChallengeRoom', { roomId: 'demo' });
-          }
-        },
-      },
-    ]);
+    try {
+      setCreating(true);
+      
+      // Create room in Firebase
+      const roomData = {
+        name: roomName,
+        mode: roomMode,
+        capacity: capacity,
+        isPrivate: isPrivate,
+        hostId: user.uid,
+        mainHostId: user.uid, // Original creator
+        hostName: user.displayName || 'Anonymous',
+        hostPhoto: user.photoURL || null,
+        participants: [user.uid],
+        participantCount: 1,
+        currentSong: preSelectedSong || null,
+        isLive: true,
+        createdAt: serverTimestamp(),
+      };
+
+      const roomRef = await addDoc(collection(db, 'rooms'), roomData);
+      
+      setCreating(false);
+      
+      // Play the preselected song if available
+      if (preSelectedSong) {
+        playSong(preSelectedSong);
+      }
+      
+      // Navigate to the appropriate room
+      if (roomMode === ROOM_MODES.STANDARD) {
+        navigation.replace('ListeningRoom', { 
+          roomId: roomRef.id,
+          roomData: { ...roomData, id: roomRef.id }
+        });
+      } else {
+        navigation.replace('ChallengeRoom', { 
+          roomId: roomRef.id,
+          roomData: { ...roomData, id: roomRef.id }
+        });
+      }
+    } catch (error) {
+      setCreating(false);
+      console.error('Error creating room:', error);
+      Alert.alert('Error', 'Failed to create room. Please try again.');
+    }
   };
 
   return (
@@ -187,9 +233,15 @@ const CreateRoomScreen = ({ navigation }) => {
         </View>
 
         {/* Create Button */}
-        <TouchableOpacity style={styles.createButton} onPress={handleCreateRoom}>
+        <TouchableOpacity 
+          style={styles.createButton} 
+          onPress={handleCreateRoom}
+          disabled={creating}
+        >
           <LinearGradient colors={GRADIENTS.primary} style={styles.createButtonGradient}>
-            <Text style={styles.createButtonText}>Create Room</Text>
+            <Text style={styles.createButtonText}>
+              {creating ? 'Creating Room...' : 'Create Room'}
+            </Text>
           </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
