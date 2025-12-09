@@ -16,14 +16,23 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jerttech.jertz"
+      "bundleIdentifier": "com.jerttech.jertz",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logoOnly.png",
         "backgroundColor": "#7B2D8E"
       },
-      "package": "com.jerttech.jertz"
+      "package": "com.jerttech.jertz",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/images/logoOnly.png"
@@ -35,6 +44,11 @@
           "microphonePermission": "Allow Jertz to access your microphone for voice reactions."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7d1f4f04-ce5f-43c6-84b9-5d5bca27bd2c"
+      }
+    }
   }
 }

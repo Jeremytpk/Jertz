@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "730515541241",
+    "project_id": "jertz-4d3f9",
+    "storage_bucket": "jertz-4d3f9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730515541241:android:ae880af2ba5d723f4ea628",
+        "android_client_info": {
+          "package_name": "com.jerttech.jertz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuPzsAWMxKnyH1kHdUilLsQHp98z-aUGc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
