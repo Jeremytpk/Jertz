@@ -17,9 +17,7 @@
     "updates": {
       "url": "https://u.expo.dev/7d1f4f04-ce5f-43c6-84b9-5d5bca27bd2c"
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.jerttech.jertz",
